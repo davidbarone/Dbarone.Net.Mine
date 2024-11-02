@@ -7,6 +7,15 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Remove="Datasets\anscombe.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Datasets\anscombe.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Dbarone.Net.Csv" Version="2.0.0" />
     <PackageReference Include="Dbarone.Net.Document" Version="2.0.1" />
   </ItemGroup>
 

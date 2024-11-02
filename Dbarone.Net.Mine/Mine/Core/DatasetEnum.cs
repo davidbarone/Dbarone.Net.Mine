@@ -5,5 +5,5 @@ public enum DatasetEnum
     /// <summary>
     /// Anscombe's quartet dataset.
     /// </summary>
-    Anscombe = 0
+    anscombe = 0
 }
