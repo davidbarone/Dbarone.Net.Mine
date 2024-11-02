@@ -30,7 +30,7 @@ public class DataColumn
         return 0;
     }
 
-    public DataColumn Distinct()
+    public DataColumn Unique()
     {
         return null;
     }
