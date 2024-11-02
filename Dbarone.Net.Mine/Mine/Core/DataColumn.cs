@@ -1,5 +1,5 @@
 using Dbarone.Net.Document;
-using System.Collections;
+using System.Collections.Generic;
 
 namespace Dbarone.Net.Mine;
 
@@ -8,8 +8,7 @@ namespace Dbarone.Net.Mine;
 /// </summary>
 public class DataColumn
 {
-    SchemaElement Schema;
-    DocumentValue Document;
+    IEnumerable<object> _data;
 
     string Name { get; set; }
 
@@ -17,7 +16,7 @@ public class DataColumn
     /// Creates a new DataTable object from a document
     /// </summary>
     /// <param name=""></param>
-    public DataColumn(IEnumerable data, string name)
+    public DataColumn(IEnumerable<object> data, string name)
     {
     }
 
@@ -32,6 +31,6 @@ public class DataColumn
 
     public DataColumn Unique()
     {
-        return null;
+        return new DataColumn(_data.Distinct(), Name);
     }
 }
