@@ -46,7 +46,7 @@ public static class AprioriExtension
         return AprioriExtension.Solve(baskets, support, confidence, transactionColumnName, itemColumnName);
     }
 
-    private static List<ItemSet> GetCandidateItemSet(int k, List<BasketItem> baskets)
+    private static List<ItemSet> GetCandidateItemSet(int k, IEnumerable<BasketItem> baskets)
     {
         List<ItemSet> candidateItemset = new List<ItemSet>();
 
@@ -82,7 +82,7 @@ public static class AprioriExtension
         }
     }
 
-    private static Dictionary<ItemSet, List<string>> GetFrequentItemSets(int k, List<BasketItem> baskets, int minSupportCount)
+    private static Dictionary<ItemSet, List<string>> GetFrequentItemSets(int k, IEnumerable<BasketItem> baskets, int minSupportCount)
     {
         Dictionary<ItemSet, List<string>> frequentItemSets = new Dictionary<ItemSet, List<string>>();
         var candidates = GetCandidateItemSet(k, baskets);
@@ -90,6 +90,10 @@ public static class AprioriExtension
         if (k == 1)
         {
             Dictionary<ItemSet, List<string>> temp = new Dictionary<ItemSet, List<string>>();
+            foreach (var item in candidates)
+            {
+                temp[item] = new List<string>();
+            }
 
             // base / trivial case
             foreach (var item in baskets)
@@ -135,52 +139,42 @@ public static class AprioriExtension
 
     private static List<Hashtable> Solve(IEnumerable<BasketItem> baskets, double support, double confidence, string transactionColumnName, string itemColumnName)
     {
+        Dictionary<ItemSet, int> results = new Dictionary<ItemSet, int>();
+
         // Total transactions
-        int totalTransactions = data.Select(d => d.TID).Distinct().Count();
+        int totalTransactions = baskets.Select(d => d.TID).Distinct().Count();
 
         // minimum support count = support % * totalTransactions
         // support of item I is defined as the number of transactions containing I divided by the total number of transactions.
         int minSupportCnt = (int)((double)totalTransactions * support);
 
         var frequentItemSets = GetFrequentItemSets(1, baskets, minSupportCnt);
+        foreach (var key in frequentItemSets.Keys)
+        {
+            results[key] = frequentItemSets[key].Count();
+        }
+
         for (int k = 2; frequentItemSets.Keys.Count() > 0; k++)
         {
             // frequentItemSets 
-
-        }
-
-
-
-        Dictionary<ItemSet, int> frequentItemsets = new Dictionary<ItemSet, int>();
-
-
-        Dictionary<ItemSet, List<string>> Cn = new Dictionary<ItemSet, List<string>>();    // C-1 candidate itemsets
-        foreach (var item in C0.Keys)
-        {
-            if (C0[item].Count() >= minSupportCnt)
-                Cn[item] = C0[item];
-        }
-
-        while (Cn.Count() > 0)
-        {
-            foreach (var item in Cn.Keys)
+            frequentItemSets = GetFrequentItemSets(k, baskets, minSupportCnt);
+            foreach (var key in frequentItemSets.Keys)
             {
-                frequentItemsets[item] = Cn[item].Count;
+                results[key] = frequentItemSets[key].Count();
             }
-            Cn = GenerateCandidates(Cn, minSupportCnt);
         }
 
-        var associationRules = GenerateAssociationRules(frequentItemsets, confidence);
+        var associationRules = GenerateAssociationRules(results, confidence);
 
-        List<Hashtable> results = new List<Hashtable>();
+        List<Hashtable> lht = new List<Hashtable>();
         foreach (var key in associationRules.Keys)
         {
             Hashtable ht = new Hashtable();
             ht["Itemset"] = key;
             ht["Confidence"] = associationRules[key];
-            results.Add(ht);
+            lht.Add(ht);
         }
-        return results;
+        return lht;
     }
 
     private static Dictionary<string, double> GenerateAssociationRules(Dictionary<ItemSet, int> frequentItemsets, double confidenceThreshold)

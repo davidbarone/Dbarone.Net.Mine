@@ -43,7 +43,7 @@ T9,I3";
         var data = reader.Read();
         var doc = new DocumentArray(data.Select(r => new DocumentValue(r)));
         DataTable dt = new DataTable(doc);
-        var r = dt.Solve(2, 0.6, "ID", "Item");
+        var r = dt.Apriori(2, 0.6, "ID", "Item");
         var a = r;
     }
 }
