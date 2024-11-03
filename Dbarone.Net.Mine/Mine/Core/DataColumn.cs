@@ -18,6 +18,13 @@ public class DataColumn
     /// <param name=""></param>
     public DataColumn(IEnumerable<object> data, string name)
     {
+        this._data = data;
+        this.Name = name;
+    }
+
+    public DataColumn(IEnumerable<object> data)
+    {
+        this._data = data;
     }
 
     /// <summary>
@@ -26,7 +33,7 @@ public class DataColumn
     /// <returns></returns>
     public int Count()
     {
-        return 0;
+        return this._data.Count();
     }
 
     public DataColumn Unique()

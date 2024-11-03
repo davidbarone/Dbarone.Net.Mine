@@ -45,7 +45,9 @@ public class DataTable
 
     public DataColumn Column(string name)
     {
-        return null;
+        var items = this._document.Select(r => r.AsDocument[name]).ToList();
+        DocumentArray arr = new DocumentArray(items);
+        return new DataColumn(arr, name);
     }
 
     /// <summary>
