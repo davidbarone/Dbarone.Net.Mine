@@ -8,7 +8,7 @@ namespace Dbarone.Net.Mine.Tests;
 
 public class AprioriTests
 {
-    public static string Data => @"ID, Item
+    public static string Data => @"ID,Item
 T1,I1
 T1,I2
 T1,I5
@@ -34,7 +34,7 @@ T9,I2
 T9,I3";
 
     [Fact]
-    public void ArioriTest()
+    public void AprioriTest()
     {
         byte[] byteArray = System.Text.Encoding.UTF8.GetBytes(AprioriTests.Data);
         MemoryStream stream = new MemoryStream(byteArray);
@@ -43,7 +43,7 @@ T9,I3";
         var data = reader.Read();
         var doc = new DocumentArray(data.Select(r => new DocumentValue(r)));
         DataTable dt = new DataTable(doc);
-        var solve = Apriori.Solve(dt, 2, 0.6, "ID", "Item");
-        var a = solve;
+        var r = dt.Solve(2, 0.6, "ID", "Item");
+        var a = r;
     }
 }

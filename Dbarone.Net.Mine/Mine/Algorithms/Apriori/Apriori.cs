@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using Dbarone.Net.Document;
 
 namespace Dbarone.Net.Mine;
 
@@ -13,26 +14,42 @@ namespace Dbarone.Net.Mine;
 /// </summary>
 public static class Apriori
 {
-    public static List<Hashtable> Solve(this DataTable data, double support, double confidence, string transactionColumnName, string itemColumnName)
+    public static List<Hashtable> Solve(this DataTable table, double support, double confidence, string transactionColumnName, string itemColumnName)
     {
-        int totalTransactions = data.Column(transactionColumnName).Unique().Count();
-        int minSupportCnt = (int)((double)totalTransactions * support);
+        List<BasketItem> baskets = new List<BasketItem>();
+        foreach (DocumentValue row in table.Document)
+        {
+            BasketItem bi = new BasketItem
+            {
+                TID = row.AsDocument[transactionColumnName],
+                Item = row.AsDocument[itemColumnName]
+            };
+            baskets.Add(bi);
+        }
+        return Apriori.Solve(baskets, support, confidence, transactionColumnName, itemColumnName);
+    }
+
+
+    public static List<Hashtable> Solve(IEnumerable<BasketItem> data, double support, double confidence, string transactionColumnName, string itemColumnName)
+    {
+        int totalTransactions = data.Select(d => d.TID).Distinct().Count();
+        int minSupportCnt = (int)support;    //(int)((double)totalTransactions * support);
 
         Dictionary<ItemSet, int> frequentItemsets = new Dictionary<ItemSet, int>();
-        Dictionary<ItemSet, List<int>> C0 = new Dictionary<ItemSet, List<int>>();    // C-0 candidate itemsets
+        Dictionary<ItemSet, List<string>> C0 = new Dictionary<ItemSet, List<string>>();    // C-0 candidate itemsets
 
         // 1. Get Candidate C0
-        foreach (var item in data.Document)
+        foreach (var item in data)
         {
-            ItemSet i = new ItemSet(new List<object> { item.AsDocument[itemColumnName] });
+            ItemSet i = new ItemSet(new List<object> { item.Item });
 
             if (!C0.ContainsKey(i))
-                C0[i] = new List<int>();
+                C0[i] = new List<string>();
 
-            C0[i].Add(item.AsDocument[transactionColumnName]);
+            C0[i].Add(item.TID);
         }
 
-        Dictionary<ItemSet, List<int>> Cn = new Dictionary<ItemSet, List<int>>();    // C-1 candidate itemsets
+        Dictionary<ItemSet, List<string>> Cn = new Dictionary<ItemSet, List<string>>();    // C-1 candidate itemsets
         foreach (var item in C0.Keys)
         {
             if (C0[item].Count() >= minSupportCnt)
@@ -92,10 +109,10 @@ public static class Apriori
         return associationRules;
     }
 
-    private static Dictionary<ItemSet, List<int>> GenerateCandidates(Dictionary<ItemSet, List<int>> previousCandidates, int minSupportCnt)
+    private static Dictionary<ItemSet, List<string>> GenerateCandidates(Dictionary<ItemSet, List<string>> previousCandidates, int minSupportCnt)
     {
         List<ItemSet> newCandidateItemSets = new List<ItemSet>();
-        Dictionary<ItemSet, List<int>> newCandidates = new Dictionary<ItemSet, List<int>>();
+        Dictionary<ItemSet, List<string>> newCandidates = new Dictionary<ItemSet, List<string>>();
 
         foreach (var candidate1 in previousCandidates.Keys)
         {
@@ -112,7 +129,7 @@ public static class Apriori
         foreach (var newCandidateItemSet in newCandidateItemSets)
         {
             var sourcecandidates = previousCandidates.Keys.Where(a => a.IsSubsetOf(newCandidateItemSet));
-            List<int> TID = previousCandidates[sourcecandidates.First()];
+            List<string> TID = previousCandidates[sourcecandidates.First()];
 
             foreach (var sourcecandidate in sourcecandidates)
                 TID = TID.Intersect(previousCandidates[sourcecandidate]).ToList();
