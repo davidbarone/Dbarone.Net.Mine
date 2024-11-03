@@ -1,19 +1,38 @@
 namespace Dbarone.Net.Mine;
 
+/// <summary>
+/// A set of items in a basket.
+/// </summary>
 public class ItemSet
 {
+    /// <summary>
+    /// The items in the item set.
+    /// </summary>
+    public IEnumerable<object> Values { get; set; }
+
+    /// <summary>
+    /// Creates a new item set.
+    /// </summary>
+    /// <param name="items">Array of items.</param>
     public ItemSet(IEnumerable<object> items)
     {
         Values = items;
     }
 
-    public IEnumerable<object> Values { get; set; }
-
+    /// <summary>
+    /// The size of the item set.
+    /// </summary>
     public int Size
     {
         get { return Values.Count(); }
     }
 
+    /// <summary>
+    /// Joins 2 item sets together.
+    /// </summary>
+    /// <param name="b">The other item set to join to.</param>
+    /// <returns>Returns a joined item set.</returns>
+    /// <exception cref="ApplicationException"></exception>
     public ItemSet Join(ItemSet b)
     {
         if (this.Size != b.Size)
