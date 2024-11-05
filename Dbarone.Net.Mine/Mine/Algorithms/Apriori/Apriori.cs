@@ -16,6 +16,7 @@ namespace Dbarone.Net.Mine;
 /// - https://en.wikipedia.org/wiki/Apriori_algorithm
 /// - https://towardsdatascience.com/apriori-association-rule-mining-explanation-and-python-implementation-290b42afdfc6
 /// - https://kaumadiechamalka100.medium.com/apriori-algorithm-examples-be8915b01cf2
+/// - https://www.geeksforgeeks.org/apriori-algorithm/ (This one used for test data case)
 /// </summary>
 public static class AprioriExtension
 {
@@ -106,7 +107,7 @@ public static class AprioriExtension
             // base / trivial case
             foreach (var key in temp.Keys)
             {
-                if (temp[key].Count() > minSupportCount)
+                if (temp[key].Count() >= minSupportCount)
                 {
                     frequentItemSets[key] = temp[key];
                 }
@@ -122,16 +123,22 @@ public static class AprioriExtension
             foreach (var newCandidateItemSet in candidates)
             {
                 var sourcecandidates = previousCandidates.Keys.Where(a => a.IsSubsetOf(newCandidateItemSet));
-                List<string> TID = previousCandidates[sourcecandidates.First()];
+                if (sourcecandidates.Any())
+                {
+                    List<string> TID = previousCandidates[sourcecandidates.First()];
 
-                foreach (var sourcecandidate in sourcecandidates)
-                    TID = TID.Intersect(previousCandidates[sourcecandidate]).ToList();
+                    foreach (var sourcecandidate in sourcecandidates)
+                        TID = TID.Intersect(previousCandidates[sourcecandidate]).ToList();
 
-                frequentItemSets.Add(newCandidateItemSet, TID);
-
-                // Frequent itemset ?
-                if (TID.Count < minSupportCount)
-                    frequentItemSets.Remove(newCandidateItemSet);
+                    if (TID.Count >= minSupportCount)
+                    {
+                        frequentItemSets.Add(newCandidateItemSet, TID);
+                    }
+                    else
+                    {
+                        // not frequent
+                    }
+                }
             }
             return frequentItemSets;
         }
