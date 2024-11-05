@@ -8,13 +8,13 @@ public class ItemSet
     /// <summary>
     /// The items in the item set.
     /// </summary>
-    public IEnumerable<object> Values { get; set; }
+    public IEnumerable<string> Values { get; set; }
 
     /// <summary>
     /// Creates a new item set.
     /// </summary>
     /// <param name="items">Array of items.</param>
-    public ItemSet(IEnumerable<object> items)
+    public ItemSet(IEnumerable<string> items)
     {
         Values = items;
     }

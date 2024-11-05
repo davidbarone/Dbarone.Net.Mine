@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using Dbarone.Net.Document;
+using Dbarone.Net.Extensions;
 
 namespace Dbarone.Net.Mine;
 
@@ -29,7 +30,7 @@ public static class AprioriExtension
     /// <param name="transactionColumnName">The column name in the table storing the transaction identifier.</param>
     /// <param name="itemColumnName">The column name in the table storing the item identifier.</param>
     /// <returns></returns>
-    public static List<Hashtable> Apriori(this DataTable table, double support, double confidence, string transactionColumnName, string itemColumnName)
+    public static IEnumerable<AprioriResult> Apriori(this DataTable table, double support, double confidence, string transactionColumnName, string itemColumnName)
     {
         // format data into array of BasketItem objects for easier processing.
         List<BasketItem> baskets = new List<BasketItem>();
@@ -47,6 +48,47 @@ public static class AprioriExtension
         return AprioriExtension.Solve(baskets, support, confidence, transactionColumnName, itemColumnName);
     }
 
+    private static IEnumerable<AprioriResult> Solve(IEnumerable<BasketItem> baskets, double support, double confidence, string transactionColumnName, string itemColumnName)
+    {
+        // Validation
+        if (support < 0 || support > 1)
+        {
+            throw new Exception("Support must be between 0 and 1.");
+        }
+        else if (confidence < 0 || confidence > 1)
+        {
+            throw new Exception("Confidence must be between 0 and 1.");
+        }
+
+        Dictionary<ItemSet, int> results = new Dictionary<ItemSet, int>();
+
+        // Total transactions
+        int totalTransactions = baskets.Select(d => d.TID).Distinct().Count();
+
+        // minimum support count = support % * totalTransactions
+        // support of item I is defined as the number of transactions containing I divided by the total number of transactions.
+        int minSupportCnt = (int)((double)totalTransactions * support);
+
+        var frequentItemSets = GetFrequentItemSets(1, baskets, minSupportCnt);
+        foreach (var key in frequentItemSets.Keys)
+        {
+            results[key] = frequentItemSets[key].Count();
+        }
+
+        for (int k = 2; frequentItemSets.Keys.Count() > 0; k++)
+        {
+            // frequentItemSets 
+            frequentItemSets = GetFrequentItemSets(k, baskets, minSupportCnt);
+            foreach (var key in frequentItemSets.Keys)
+            {
+                results[key] = frequentItemSets[key].Count();
+            }
+        }
+
+        var associationRules = GenerateAssociationRules(results, confidence, totalTransactions);
+        return associationRules;
+    }
+
     private static List<ItemSet> GetCandidateItemSet(int k, IEnumerable<BasketItem> baskets)
     {
         List<ItemSet> candidateItemset = new List<ItemSet>();
@@ -56,7 +98,7 @@ public static class AprioriExtension
             // base / trivial case
             foreach (var item in baskets)
             {
-                ItemSet i = new ItemSet(new List<object> { item.Item });
+                ItemSet i = new ItemSet(new List<string> { item.Item });
 
                 if (!candidateItemset.Contains(i))
                 {
@@ -99,7 +141,7 @@ public static class AprioriExtension
             // base / trivial case
             foreach (var item in baskets)
             {
-                ItemSet i = new ItemSet(new List<object> { item.Item });
+                ItemSet i = new ItemSet(new List<string> { item.Item });
                 // Add the transaction id occurrence to the candidate itemset for k=1.
                 temp[i].Add(item.TID);
             }
@@ -116,6 +158,10 @@ public static class AprioriExtension
         }
         else
         {
+            if (k == 3)
+            {
+                var a = 1;
+            }
             var previousCandidates = GetFrequentItemSets(k - 1, baskets, minSupportCount);
 
             // Now for each Cn candidate, get the transactions that match
@@ -123,8 +169,19 @@ public static class AprioriExtension
             foreach (var newCandidateItemSet in candidates)
             {
                 var sourcecandidates = previousCandidates.Keys.Where(a => a.IsSubsetOf(newCandidateItemSet));
-                if (sourcecandidates.Any())
+
+                // there must be source candidates.
+                // Also, previous level candidates must include ALL the items in the new candidate
+                var allSourceCandidateItems = sourcecandidates.Aggregate(
+                    new List<string>(),
+                    (acc, src) => src.Values.ToList().Union(acc).ToList(),
+                    (acc) => acc);
+
+                if (sourcecandidates.Any() && !newCandidateItemSet.Values.Except(allSourceCandidateItems).Any())
                 {
+                    // we loop through each source candidate, getting the transaction IDs
+                    // then intersect each one. The TIDs we are left with must be the IDs
+                    // that are contain the new candidate item set.
                     List<string> TID = previousCandidates[sourcecandidates.First()];
 
                     foreach (var sourcecandidate in sourcecandidates)
@@ -144,49 +201,10 @@ public static class AprioriExtension
         }
     }
 
-    private static List<Hashtable> Solve(IEnumerable<BasketItem> baskets, double support, double confidence, string transactionColumnName, string itemColumnName)
-    {
-        Dictionary<ItemSet, int> results = new Dictionary<ItemSet, int>();
-
-        // Total transactions
-        int totalTransactions = baskets.Select(d => d.TID).Distinct().Count();
-
-        // minimum support count = support % * totalTransactions
-        // support of item I is defined as the number of transactions containing I divided by the total number of transactions.
-        int minSupportCnt = (int)((double)totalTransactions * support);
-
-        var frequentItemSets = GetFrequentItemSets(1, baskets, minSupportCnt);
-        foreach (var key in frequentItemSets.Keys)
-        {
-            results[key] = frequentItemSets[key].Count();
-        }
-
-        for (int k = 2; frequentItemSets.Keys.Count() > 0; k++)
-        {
-            // frequentItemSets 
-            frequentItemSets = GetFrequentItemSets(k, baskets, minSupportCnt);
-            foreach (var key in frequentItemSets.Keys)
-            {
-                results[key] = frequentItemSets[key].Count();
-            }
-        }
-
-        var associationRules = GenerateAssociationRules(results, confidence);
-
-        List<Hashtable> lht = new List<Hashtable>();
-        foreach (var key in associationRules.Keys)
-        {
-            Hashtable ht = new Hashtable();
-            ht["Itemset"] = key;
-            ht["Confidence"] = associationRules[key];
-            lht.Add(ht);
-        }
-        return lht;
-    }
-
-    private static Dictionary<string, double> GenerateAssociationRules(Dictionary<ItemSet, int> frequentItemsets, double confidenceThreshold)
+    private static IEnumerable<AprioriResult> GenerateAssociationRules(Dictionary<ItemSet, int> frequentItemsets, double confidenceThreshold, int totalTransactions)
     {
         Dictionary<string, double> associationRules = new Dictionary<string, double>();
+        List<AprioriResult> results = new List<AprioriResult>();
 
         foreach (var frequentItemSeta in frequentItemsets.Keys)
         {
@@ -202,16 +220,20 @@ public static class AprioriExtension
                         // add rule
                         // format = substring (I1^I2^I3...) -> superstring
                         // ie association from 'I1,I2' to 'I1,I2,I5' is written as: 'I1^I2->I5'
-
-                        string rule = string.Format(
+                        var result = new AprioriResult
+                        {
+                            Rule = string.Format(
                             "{0}->{1}",
                             string.Join("^", frequentItemSeta.Values.ToList()),
-                            string.Join("^", frequentItemSetb.Values.Except(frequentItemSeta.Values).ToList()));
-                        associationRules[rule] = confidence;
+                            string.Join("^", frequentItemSetb.Values.Except(frequentItemSeta.Values).ToList())),
+                            Confidence = confidence,
+                            Lift = confidence / (b / totalTransactions)
+                        };
+                        results.Add(result);
                     }
                 }
             }
         }
-        return associationRules;
+        return results;
     }
 }
