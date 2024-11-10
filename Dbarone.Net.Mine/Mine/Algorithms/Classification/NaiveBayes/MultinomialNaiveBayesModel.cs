@@ -1,15 +1,29 @@
-/// <summary>
-/// Multinomial Naive Bayes model for single response vector / column.
-/// </summary>
+using Dbarone.Net.Mine;
+
 public class MultinomialNaiveBayesModel
 {
-    /// <summary>
-    /// Stores counts of the priori events.
-    /// </summary>
-    public Dictionary<string, int> Counts = new Dictionary<string, int>();
+    Dictionary<string, MultinomialNaiveBayesResponseModel> _model = new Dictionary<string, MultinomialNaiveBayesResponseModel>();
+    public MultinomialNaiveBayesParameters Parameters { get; set; }
 
-    /// <summary>
-    /// Stores counts of the posterior events.
-    /// </summary>
-    public Dictionary<string, Dictionary<string, Dictionary<string, int>>> CountsAfterEvidence = new Dictionary<string, Dictionary<string, Dictionary<string, int>>>();
+    public MultinomialNaiveBayesModel(MultinomialNaiveBayesParameters parameters)
+    {
+        this.Parameters = parameters;
+    }
+
+    public MultinomialNaiveBayesResponseModel GetModelForResponse(string response)
+    {
+        return _model[response];
+    }
+
+    public bool ModelExistsForResponse(string response)
+    {
+        return _model.ContainsKey(response);
+    }
+
+    public void CreateModelForResponse(string response)
+    {
+        _model[response] = new MultinomialNaiveBayesResponseModel();
+    }
+
+    public int TrainingDataRowCount { get; set; }
 }

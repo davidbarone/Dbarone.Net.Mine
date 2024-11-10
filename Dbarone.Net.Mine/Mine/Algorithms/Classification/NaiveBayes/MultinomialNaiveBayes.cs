@@ -1,3 +1,5 @@
+using Microsoft.VisualBasic;
+
 namespace Dbarone.Net.Mine;
 
 public class MultinomialNaiveBayes
@@ -16,17 +18,17 @@ public class MultinomialNaiveBayes
     /// <param name="trainingDataset">The training dataset</param>
     /// <param name="responses">The predictor / y variable names. Required.</param>
     /// <param name="features">The feature / x variable names in the dataset.</param>
-    public Dictionary<string, MultinomialNaiveBayesModel> Fit(DataTable trainingDataset, IEnumerable<string> responses, IEnumerable<string> features = null)
+    public MultinomialNaiveBayesModel Fit(DataTable trainingDataset, IEnumerable<string> responses, IEnumerable<string> features = null)
     {
         var parameters = new MultinomialNaiveBayesParameters(trainingDataset, responses);
 
         // Model for all response columns
-        Dictionary<string, MultinomialNaiveBayesModel> model = new Dictionary<string, MultinomialNaiveBayesModel>();
+        MultinomialNaiveBayesModel model = new MultinomialNaiveBayesModel(parameters);
 
         // build model for each response variable.
         foreach (var response in parameters.Responses)
         {
-            model[response] = new MultinomialNaiveBayesModel();
+            model.CreateModelForResponse(response);
 
             int instances = 0;  // size of training data
 
@@ -36,65 +38,65 @@ public class MultinomialNaiveBayes
                 string category = row[response];
 
                 // get numbers of each classifier
-                if (!model[response].Counts.ContainsKey(category))
+                if (!model.GetModelForResponse(response).Counts.ContainsKey(category))
                 {
-                    model[response].Counts[category] = 0;
-                    model[response].CountsAfterEvidence[category] = new Dictionary<string, Dictionary<string, int>>();
+                    model.GetModelForResponse(response).Counts[category] = 0;
+                    model.GetModelForResponse(response).CountsAfterEvidence[category] = new Dictionary<string, Dictionary<string, int>>();
                     foreach (string key in row.AsDocument.Keys)
                     {
-                        model[response].CountsAfterEvidence[category][key] = new Dictionary<string, int>();
+                        model.GetModelForResponse(response).CountsAfterEvidence[category][key] = new Dictionary<string, int>();
                     }
                 }
 
-                model[response].Counts[category]++;
+                model.GetModelForResponse(response).Counts[category]++;
 
                 foreach (string key in row.AsDocument.Keys)
                 {
-                    if (!model[response].CountsAfterEvidence[category][key].ContainsKey(row[key].ToString()))
+                    if (!model.GetModelForResponse(response).CountsAfterEvidence[category][key].ContainsKey(row[key].ToString()))
                     {
-                        model[response].CountsAfterEvidence[category][key][row[key]] = 0;
+                        model.GetModelForResponse(response).CountsAfterEvidence[category][key][row[key]] = 0;
                     }
-                    model[response].CountsAfterEvidence[category][key][row[key]]++;
+                    model.GetModelForResponse(response).CountsAfterEvidence[category][key][row[key]]++;
                 }
             }
+            model.TrainingDataRowCount = instances;
         }
         return model;
     }
 
-    public DataTable Predict(Dictionary<string, MultinomialNaiveBayesModel> model, DataTable testData)
+    public DataTable Predict(MultinomialNaiveBayesModel model, DataTable testData)
     {
-        // training set now completed - do test
-        foreach (var row in data.TestData)
+        foreach (var response in model.Parameters.Responses)
         {
-            float bestOutcomeScore = 0;
-            object bestOutcomeEvent = "";
-
-            foreach (var key in count_events.Keys)
+            foreach (var row in testData.Document)
             {
-                float currentOutcomeScore = 1;
-                currentOutcomeScore = currentOutcomeScore * ((float)count_events[key] / instances);
+                float bestOutcomeScore = 0;
+                string bestOutcomeEvent = "";   // the predicted value
 
-                foreach (var item in row.Keys)
+                foreach (var key in model.GetModelForResponse(response).Counts.Keys)
                 {
-                    float probability = 0;
-                    if (count_event_after_evidence[key][(string)item].ContainsKey(row[item]))
+                    float currentOutcomeScore = 1;
+                    currentOutcomeScore = currentOutcomeScore * ((float)model.GetModelForResponse(response).Counts[key] / model.TrainingDataRowCount);
+
+                    foreach (var item in row.AsDocument.Keys)
                     {
-                        probability = (float)count_event_after_evidence[key][(string)item][row[item]] / (int)count_events[key];
+                        float probability = 0;
+                        if (model.GetModelForResponse(response).CountsAfterEvidence[key][(string)item].ContainsKey(row[item]))
+                        {
+                            probability = (float)model.GetModelForResponse(response).CountsAfterEvidence[key][(string)item][row[item]] / (int)model.GetModelForResponse(response).Counts[key];
+                        }
+                        currentOutcomeScore = currentOutcomeScore * probability;
                     }
-                    currentOutcomeScore = currentOutcomeScore * probability;
-                }
 
-                // Console.WriteLine(string.Format("{0} = {1}", currentOutcomeScore, key));
-
-                if (currentOutcomeScore > bestOutcomeScore)
-                {
-                    bestOutcomeScore = currentOutcomeScore;
-                    bestOutcomeEvent = key;
+                    if (currentOutcomeScore > bestOutcomeScore)
+                    {
+                        bestOutcomeScore = currentOutcomeScore;
+                        bestOutcomeEvent = key;
+                    }
                 }
+                row.AsDocument["predict_" + response] = bestOutcomeEvent; // set predicted value for row
             }
-            row[eventField] = bestOutcomeEvent; // set predicted value for row
-                                                //Console.WriteLine(string.Format("outcome is: {0} with an outcome of: {1}", bestOutcomeEvent, bestOutcomeScore));
         }
-
+        return testData;
     }
 }
