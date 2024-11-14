@@ -16,12 +16,18 @@ public class Dataset
     /// <returns>Returns the string contents of the resource.</returns>
     public static string GetString(DatasetEnum dataset)
     {
+        var resource = GetStream(dataset);
+        StreamReader sr = new StreamReader(resource);
+        return sr.ReadToEnd();
+    }
+
+    public static Stream GetStream(DatasetEnum dataset)
+    {
         var datasetStr = dataset.ToString();
         var assembly = typeof(Dataset).GetTypeInfo().Assembly;
         var path = GetResources().First(r => r.Contains(datasetStr));
         Stream resource = assembly.GetManifestResourceStream(path)!;
-        StreamReader sr = new StreamReader(resource);
-        return sr.ReadToEnd();
+        return resource;
     }
 
     /// <summary>

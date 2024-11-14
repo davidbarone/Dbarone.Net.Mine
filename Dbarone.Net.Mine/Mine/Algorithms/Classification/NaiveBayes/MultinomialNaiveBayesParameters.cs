@@ -39,7 +39,7 @@ public class MultinomialNaiveBayesParameters
     {
         get
         {
-            foreach (var column in _trainingData.Columns())
+            foreach (var column in _trainingData.Columns)
             {
                 if (!Responses.Contains(column))
                 {

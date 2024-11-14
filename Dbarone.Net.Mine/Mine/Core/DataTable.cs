@@ -10,10 +10,11 @@ namespace Dbarone.Net.Mine;
 /// <summary>
 /// Represents a table of data. Similar to pandas dataframe
 /// </summary>
-public class DataTable : IEnumerable<DictionaryDocument>
+public class DataTable
 {
     SchemaElement _schema;
     DocumentArray _document;
+    DataTableRowCollection _rows;
 
     /// <summary>
     /// Creates a new DataTable object from a document
@@ -32,6 +33,7 @@ public class DataTable : IEnumerable<DictionaryDocument>
         }
         this._schema = element;
         this._document = document.AsArray;
+        this._rows = new DataTableRowCollection(this);
     }
 
     public DocumentArray Document
@@ -39,10 +41,7 @@ public class DataTable : IEnumerable<DictionaryDocument>
         get { return this._document; }
     }
 
-    public IEnumerable<string> Columns()
-    {
-        return this._schema.Element.Attributes.Select(a => a.AttributeName);
-    }
+    public IEnumerable<string> Columns => this._schema.Element.Attributes.Select(a => a.AttributeName);
 
     public DataColumn Column(string name)
     {
@@ -50,6 +49,8 @@ public class DataTable : IEnumerable<DictionaryDocument>
         DocumentArray arr = new DocumentArray(items);
         return new DataColumn(arr, name);
     }
+
+    public DataTableRowCollection Rows => _rows;
 
     /// <summary>
     /// Creates a new DataTable object from a csv stream.
@@ -65,20 +66,12 @@ public class DataTable : IEnumerable<DictionaryDocument>
         return new DataTable(doc);
     }
 
-    public static DataTable ReadJson(Stream stream, JsonSerializerOptions configuration)
+    public static DataTable ReadJson(Stream stream, JsonSerializerOptions? configuration = null)
     {
+        configuration = configuration ?? new JsonSerializerOptions();
         var data = System.Text.Json.JsonSerializer.Deserialize<IDictionary<string, object>>(stream, configuration);
         DocumentValue doc = new DocumentArray(data.Select(r => new DocumentValue(r)));
         return new DataTable(doc);
     }
 
-    IEnumerator<DictionaryDocument> IEnumerable<DictionaryDocument>.GetEnumerator()
-    {
-        return new DictionaryDocumentEnumerator(this);
-    }
-
-    public IEnumerator GetEnumerator()
-    {
-        return GetEnumerator();
-    }
 }
