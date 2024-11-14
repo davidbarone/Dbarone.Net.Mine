@@ -1,0 +1,15 @@
+[
+  {
+    "notes": "A simple foobarbaz dataset to test basic DataTable functionality.",
+    "a": 1,
+    "b": "foo"
+  },
+  {
+    "a": 2,
+    "b": "bar"
+  },
+  {
+    "a": 3,
+    "b": "baz"
+  }
+]

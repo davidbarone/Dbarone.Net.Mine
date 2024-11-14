@@ -42,6 +42,6 @@ rainy,mild,high,true,no";
         var data = GetData();
         MultinomialNaiveBayes nb = new MultinomialNaiveBayes();
         var model = nb.Fit(data, ["Play"]);
-        nb.Predict(model, data);
+        var results = nb.Predict(model, data);
     }
 }

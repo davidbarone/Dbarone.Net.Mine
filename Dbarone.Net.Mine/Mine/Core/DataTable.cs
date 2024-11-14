@@ -3,13 +3,14 @@ using Dbarone.Net.Csv;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using System.Text.Json;
+using System.Collections;
 
 namespace Dbarone.Net.Mine;
 
 /// <summary>
 /// Represents a table of data. Similar to pandas dataframe
 /// </summary>
-public class DataTable
+public class DataTable : IEnumerable<DictionaryDocument>
 {
     SchemaElement _schema;
     DocumentArray _document;
@@ -69,5 +70,15 @@ public class DataTable
         var data = System.Text.Json.JsonSerializer.Deserialize<IDictionary<string, object>>(stream, configuration);
         DocumentValue doc = new DocumentArray(data.Select(r => new DocumentValue(r)));
         return new DataTable(doc);
+    }
+
+    IEnumerator<DictionaryDocument> IEnumerable<DictionaryDocument>.GetEnumerator()
+    {
+        return new DictionaryDocumentEnumerator(this);
+    }
+
+    public IEnumerator GetEnumerator()
+    {
+        return GetEnumerator();
     }
 }

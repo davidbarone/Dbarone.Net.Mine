@@ -8,10 +8,12 @@
 
   <ItemGroup>
     <Content Remove="Datasets\anscombe.json" />
+    <Content Remove="Datasets\foobarbaz.json" />
   </ItemGroup>
 
   <ItemGroup>
     <EmbeddedResource Include="Datasets\anscombe.json" />
+    <EmbeddedResource Include="Datasets\foobarbaz.json" />
   </ItemGroup>
 
   <ItemGroup>
