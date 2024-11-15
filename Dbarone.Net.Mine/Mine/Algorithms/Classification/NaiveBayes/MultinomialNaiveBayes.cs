@@ -5,9 +5,6 @@ namespace Dbarone.Net.Mine;
 
 public class MultinomialNaiveBayes
 {
-    private IEnumerable<string> _features { get; set; }
-    private IEnumerable<string> _responses { get; set; }
-
     public MultinomialNaiveBayes()
     {
 
@@ -51,7 +48,7 @@ public class MultinomialNaiveBayes
 
                 model.GetModelForResponse(response).Counts[category]++;
 
-                foreach (string key in row.Keys)
+                foreach (string key in parameters.Features)
                 {
                     if (!model.GetModelForResponse(response).CountsAfterEvidence[category][key].ContainsKey(row[key].AsString))
                     {
@@ -81,7 +78,7 @@ public class MultinomialNaiveBayes
                     float currentOutcomeScore = 1;
                     currentOutcomeScore = currentOutcomeScore * ((float)model.GetModelForResponse(response).Counts[key] / model.TrainingDataRowCount);
 
-                    foreach (var item in row.AsDocument.Keys)
+                    foreach (var item in model.Parameters.Features)
                     {
                         float probability = 0;
                         if (model.GetModelForResponse(response).CountsAfterEvidence[key][(string)item].ContainsKey(row[item]))

@@ -22,8 +22,8 @@ public class MultinomialNaiveBayesTests
         MultinomialNaiveBayes nb = new MultinomialNaiveBayes();
         var model = nb.Fit(data, ["Play"]);
         var results = nb.Predict(model, data, "predict_");
-        var total = 0;
-        var correct = 0;
+        var total = 0.0;
+        var correct = 0.0;
         foreach (var row in results.Rows)
         {
             total++;
@@ -34,7 +34,7 @@ public class MultinomialNaiveBayesTests
                 correct++;
             }
         }
-        // Should get 100% correct on this dataset.
-        Assert.Equal(1, correct / total);
+        // Should predict 13/14 correctly.
+        Assert.Equal(13.0 / 14.0, correct / total);
     }
 }
