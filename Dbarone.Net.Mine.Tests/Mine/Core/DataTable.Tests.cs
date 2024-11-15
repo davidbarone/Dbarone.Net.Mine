@@ -22,4 +22,14 @@ public class DataTableTests
         Assert.Equal(2, dt.Columns.Count());
         Assert.Equal(3, dt.Rows.Count());
     }
+
+    public void ReadCsv()
+    {
+        var str = Dataset.GetStream(DatasetEnum.foobarbaz);
+        var dt = DataTable.ReadCsv(str);
+        Assert.NotNull(dt);
+        Assert.IsType<DataTable>(dt);
+        Assert.Equal(2, dt.Columns.Count());
+        Assert.Equal(3, dt.Rows.Count());
+    }
 }

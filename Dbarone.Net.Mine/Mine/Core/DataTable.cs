@@ -52,7 +52,7 @@ public class DataTable
         return new DataColumn(arr, name);
     }
 
-    public DataTableRowCollection Rows => _rows;
+    public IEnumerable<DictionaryDocument> Rows => _rows;
 
     /// <summary>
     /// Creates a new DataTable object from a csv stream.
@@ -60,14 +60,20 @@ public class DataTable
     /// <param name="stream"></param>
     /// <param name="configuration"></param>
     /// <returns></returns>
-    public static DataTable ReadCsv(Stream stream, CsvConfiguration configuration)
+    public static DataTable ReadCsv(Stream stream, CsvConfiguration? configuration = null)
     {
-        CsvReader reader = new CsvReader(stream, configuration);
+        CsvConfiguration options = configuration ?? new CsvConfiguration();
+        CsvReader reader = new CsvReader(stream, options);
         var data = reader.Read();
         DocumentValue doc = new DocumentArray(data.Select(r => new DocumentValue(r)));
         return new DataTable(doc);
     }
 
+    /// <summary>
+    /// Creates a new DataTable object from a json stream.
+    /// </summary>
+    /// <param name="stream"></param>
+    /// <returns></returns>
     public static DataTable ReadJson(Stream stream)
     {
         var options = new JsonSerializerOptions();
@@ -79,5 +85,4 @@ public class DataTable
         DocumentValue doc = new DocumentArray(data.Select(r => new DocumentValue(r)));
         return new DataTable(doc);
     }
-
 }

@@ -1,3 +1,4 @@
+using Dbarone.Net.Document;
 using Microsoft.VisualBasic;
 
 namespace Dbarone.Net.Mine;
@@ -32,7 +33,7 @@ public class MultinomialNaiveBayes
 
             int instances = 0;  // size of training data
 
-            foreach (var row in trainingDataset.Document)
+            foreach (var row in trainingDataset.Rows)
             {
                 instances++;
                 string category = row[response];
@@ -42,7 +43,7 @@ public class MultinomialNaiveBayes
                 {
                     model.GetModelForResponse(response).Counts[category] = 0;
                     model.GetModelForResponse(response).CountsAfterEvidence[category] = new Dictionary<string, Dictionary<string, int>>();
-                    foreach (string key in row.AsDocument.Keys)
+                    foreach (string key in row.Keys)
                     {
                         model.GetModelForResponse(response).CountsAfterEvidence[category][key] = new Dictionary<string, int>();
                     }
@@ -50,9 +51,9 @@ public class MultinomialNaiveBayes
 
                 model.GetModelForResponse(response).Counts[category]++;
 
-                foreach (string key in row.AsDocument.Keys)
+                foreach (string key in row.Keys)
                 {
-                    if (!model.GetModelForResponse(response).CountsAfterEvidence[category][key].ContainsKey(row[key].ToString()))
+                    if (!model.GetModelForResponse(response).CountsAfterEvidence[category][key].ContainsKey(row[key].AsString))
                     {
                         model.GetModelForResponse(response).CountsAfterEvidence[category][key][row[key]] = 0;
                     }
@@ -64,11 +65,11 @@ public class MultinomialNaiveBayes
         return model;
     }
 
-    public DataTable Predict(MultinomialNaiveBayesModel model, DataTable testData)
+    public DataTable Predict(MultinomialNaiveBayesModel model, DataTable testData, string predictColumnPrefix = "predict_")
     {
         foreach (var response in model.Parameters.Responses)
         {
-            foreach (var row in testData.Document)
+            foreach (var row in testData.Rows)
             {
                 float bestOutcomeScore = 0;
                 string bestOutcomeEvent = "";   // the predicted value
@@ -94,7 +95,7 @@ public class MultinomialNaiveBayes
                         bestOutcomeEvent = key;
                     }
                 }
-                row.AsDocument["predict_" + response] = bestOutcomeEvent; // set predicted value for row
+                row.AsDocument[$"{predictColumnPrefix}{response}"] = bestOutcomeEvent; // set predicted value for row
             }
         }
         return testData;

@@ -9,11 +9,15 @@
   <ItemGroup>
     <Content Remove="Datasets\anscombe.json" />
     <Content Remove="Datasets\foobarbaz.json" />
+    <Content Remove="Datasets\tennis.csv" />
+    <Content Remove="Datasets\apriori.csv" />
   </ItemGroup>
 
   <ItemGroup>
     <EmbeddedResource Include="Datasets\anscombe.json" />
     <EmbeddedResource Include="Datasets\foobarbaz.json" />
+    <EmbeddedResource Include="Datasets\tennis.csv" />
+    <EmbeddedResource Include="Datasets\apriori.csv" />
   </ItemGroup>
 
   <ItemGroup>
