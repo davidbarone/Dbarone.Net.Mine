@@ -34,6 +34,7 @@ public class MultinomialNaiveBayesTests
                 correct++;
             }
         }
-        var a = 1;
+        // Should get 100% correct on this dataset.
+        Assert.Equal(1, correct / total);
     }
 }

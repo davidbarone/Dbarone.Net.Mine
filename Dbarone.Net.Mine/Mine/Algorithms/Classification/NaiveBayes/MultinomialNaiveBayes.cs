@@ -67,9 +67,11 @@ public class MultinomialNaiveBayes
 
     public DataTable Predict(MultinomialNaiveBayesModel model, DataTable testData, string predictColumnPrefix = "predict_")
     {
-        foreach (var response in model.Parameters.Responses)
+        List<DictionaryDocument> results = new List<DictionaryDocument>();
+
+        foreach (var row in testData.Rows)
         {
-            foreach (var row in testData.Rows)
+            foreach (var response in model.Parameters.Responses)
             {
                 float bestOutcomeScore = 0;
                 string bestOutcomeEvent = "";   // the predicted value
@@ -95,9 +97,10 @@ public class MultinomialNaiveBayes
                         bestOutcomeEvent = key;
                     }
                 }
-                row.AsDocument[$"{predictColumnPrefix}{response}"] = bestOutcomeEvent; // set predicted value for row
+                row[$"{predictColumnPrefix}{response}"] = bestOutcomeEvent; // set predicted value for row
             }
+            results.Add(row);
         }
-        return testData;
+        return new DataTable(new DocumentArray(results));
     }
 }
