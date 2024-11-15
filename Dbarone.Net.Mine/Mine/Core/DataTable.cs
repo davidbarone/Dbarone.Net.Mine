@@ -4,6 +4,8 @@ using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using System.Text.Json;
 using System.Collections;
+using Dbarone.Net.Extensions;
+using System.Text.Json.Serialization.Metadata;
 
 namespace Dbarone.Net.Mine;
 
@@ -66,10 +68,14 @@ public class DataTable
         return new DataTable(doc);
     }
 
-    public static DataTable ReadJson(Stream stream, JsonSerializerOptions? configuration = null)
+    public static DataTable ReadJson(Stream stream)
     {
-        configuration = configuration ?? new JsonSerializerOptions();
-        var data = System.Text.Json.JsonSerializer.Deserialize<IDictionary<string, object>>(stream, configuration);
+        var options = new JsonSerializerOptions();
+        options.WriteIndented = true;
+        options.Converters.Add(new ObjectToInferredTypesConverter());
+        var data = System.Text.Json.JsonSerializer.Deserialize<IEnumerable<IDictionary<string, object>>>(stream, options);
+
+        var d = new DocumentValue(data);
         DocumentValue doc = new DocumentArray(data.Select(r => new DocumentValue(r)));
         return new DataTable(doc);
     }
